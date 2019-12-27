@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/websocket"
 	"net/http"
 	"net/http/httputil"
-	"net/url"
 	"time"
 	"log"
 )
@@ -33,6 +32,7 @@ type WsConn struct {
 	closeMessageBufferChan chan []byte
 	subs                   []interface{}
 	close                  chan struct{}
+	isClosed               bool
 }
 
 type WsBuilder struct {
@@ -40,10 +40,10 @@ type WsBuilder struct {
 }
 
 func NewWsBuilder() *WsBuilder {
-	return &WsBuilder{
-		&WsConfig{
-			ReqHeaders: make(map[string][]string, 1)
-		}
+	return &WsBuilder {
+		&WsConfig {
+			ReqHeaders: make(map[string][]string, 1),
+		},
 	}
 }
 
@@ -108,9 +108,9 @@ func (ws *WsConn) connect() error {
 
 	wsConn, resp, err := dialer.Dial(ws.WsUrl, http.Header(ws.ReqHeaders))
 	if err != nil {
-		log.Errorf("[ws][%s] %s", ws.WsUrl, err.Error())
+		log.Printf("[ws][%s] %s", ws.WsUrl, err.Error())
 		if ws.IsDump && resp != nil {
-			dumpData := httputil.DumpResponse(resp, true)
+			dumpData, _ := httputil.DumpResponse(resp, true)
 			log.Printf("[ws][%s] %s", ws.WsUrl, string(dumpData))
 		}
 		return err
@@ -119,7 +119,7 @@ func (ws *WsConn) connect() error {
 	ws.c = wsConn
 
 	if ws.IsDump {
-		dumpData := httputil.DumpResponse(resp, true)
+		dumpData, _ := httputil.DumpResponse(resp, true)
 		log.Printf("[ws][%s] %s", ws.WsUrl, string(dumpData))
 	}
 
@@ -137,7 +137,7 @@ func (ws *WsConn) reconnect() {
 
 		err = ws.connect()
 		if err != nil {
-			log.Errorf("[ws][%s] websocket reconnect fail , %s", ws.WsUrl, err.Error())
+			log.Printf("[ws][%s] websocket reconnect fail , %s", ws.WsUrl, err.Error())
 		} else {
 			break
 		}
@@ -146,7 +146,7 @@ func (ws *WsConn) reconnect() {
 	}
 
 	if err != nil {
-		log.Errorf("[ws][%s] retry reconnect fail , begin exiting. ", ws.WsUrl)
+		log.Printf("[ws][%s] retry reconnect fail , begin exiting. ", ws.WsUrl)
 		ws.Close()
 		if ws.ErrorHandleFunc != nil {
 			ws.ErrorHandleFunc(errors.New("retry reconnect fail"))
@@ -168,7 +168,7 @@ func (ws *WsConn) writeRequest() {
 	for {
 		select {
 		case <-ws.close:
-			log.Printf("[ws][%s] close websocket, exiting write message goroutine.", ws.WsUrl)
+			//log.Printf("[ws][%s] close websocket, exiting write message goroutine.", ws.WsUrl)
 			return
 		case d := <-ws.writeBufferChan:
 			err = ws.c.WriteMessage(websocket.TextMessage, d)
@@ -179,7 +179,7 @@ func (ws *WsConn) writeRequest() {
 		}
 
 		if err != nil {
-			log.Errorf("[ws][%s] %s", ws.WsUrl, err.Error())
+			log.Printf("[ws][%s] %s", ws.WsUrl, err.Error())
 			time.Sleep(time.Second)
 		}
 	}
@@ -188,7 +188,7 @@ func (ws *WsConn) writeRequest() {
 func (ws *WsConn) Subscribe(sub interface{}) error {
 	data, err := json.Marshal(sub)
 	if err != nil {
-		log.Errorf("[ws][%s] json encode error , %s", ws.WsUrl, err)
+		log.Printf("[ws][%s] json encode error , %s", ws.WsUrl, err)
 		return err
 	}
 	ws.writeBufferChan <- data
@@ -211,7 +211,7 @@ func (ws *WsConn) SendCloseMessage(msg []byte) {
 func (ws *WsConn) SendJsonMessage(m interface{}) error {
 	data, err := json.Marshal(m)
 	if err != nil {
-		log.Errorf("[ws][%s] json encode error , %s", ws.WsUrl, err)
+		log.Printf("[ws][%s] json encode error , %s", ws.WsUrl, err)
 		return err
 	}
 	ws.writeBufferChan <- data
@@ -236,17 +236,18 @@ func (ws *WsConn) receiveMessage() {
 	})
 
 	for {
-		if len(ws.close) > 0 {
-			log.Infof("[ws][%s] close websocket , exiting receive message goroutine.", ws.WsUrl)
+
+		t, msg, err := ws.c.ReadMessage()
+		
+		if len(ws.close) > 0 || ws.isClosed {
+			//log.Printf("[ws][%s] close websocket, exiting receive message goroutine.", ws.WsUrl)
 			return
 		}
 
-		t, msg, err := ws.c.ReadMessage()
-
 		if err != nil {
-			log.Error("[ws]", err)
+			log.Printf("[ws] error: %s", err)
 			if ws.IsAutoReconnect {
-				log.Printf("[ws][%s] Unexpected Closed , Begin Retry Connect.", ws.WsUrl)
+				log.Printf("[ws][%s] Unexpected Closed, Begin Retry Connect.", ws.WsUrl)
 				ws.reconnect()
 				continue
 			}
@@ -269,17 +270,18 @@ func (ws *WsConn) receiveMessage() {
 			ws.Close()
 			return
 		default:
-			log.Errorf("[ws][%s] error websocket message type , content is :\n %s \n", ws.WsUrl, string(msg))
+			log.Printf("[ws][%s] error websocket message type, content is :\n %s \n", ws.WsUrl, string(msg))
 		}
 	}
 }
 
 func (ws *WsConn) Close() {
+	ws.isClosed = true
 	ws.close <- struct{}{}
 	close(ws.close)
 
 	err := ws.c.Close()
 	if err != nil {
-		log.Error("[ws]", ws.WsUrl, "close websocket error ,", err)
+		log.Println("[ws]", ws.WsUrl, "close websocket error ,", err)
 	}
 }

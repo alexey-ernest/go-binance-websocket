@@ -2,7 +2,7 @@ package binancewebsocket
 
 import (
 	"github.com/json-iterator/go"
-	"github.com/alexey-ernest/go-binance-websocket/ws"
+	"github.com/alexey-ernest/go-binance-websocket/m/v2/ws"
 	"log"
 	"fmt"
 	//"sync"
@@ -13,6 +13,7 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 type binanceWs struct {
 	baseURL string
 	//depthPool *sync.Pool
+	conn *ws.WsConn
 }
 
 func NewBinanceWs() *binanceWs {
@@ -29,9 +30,9 @@ func NewBinanceWs() *binanceWs {
 type Depth struct {
 	//pool *sync.Pool
 
-	LastUpdateID int64 `json:"lastUpdateId"`
-	Bids [][]interface{} `json:"bids"`
-	Asks [][]interface{} `json:"asks"`
+	LastUpdateID int64 `json:"u"`
+	Bids [][]interface{} `json:"b"`
+	Asks [][]interface{} `json:"a"`
 }
 
 // return instance to the pool
@@ -39,15 +40,15 @@ type Depth struct {
 // 	d.pool.Put(d)
 // }
 
-func (this *BinanceWs) subscribe(endpoint string, handle func(msg []byte) error) {
+func (this *binanceWs) subscribe(endpoint string, handle func(msg []byte) error) {
 	wsBuilder := ws.NewWsBuilder().
 		WsUrl(endpoint).
 		AutoReconnect().
 		MessageHandleFunc(handle)
-	wsBuilder.Build()
+	this.conn = wsBuilder.Build()
 }
 
-func (this *binanceWs) SubscribeDepth(pair string) (error, chan<- *Depth, <-chan struct{}) {
+func (this *binanceWs) SubscribeDepth(pair string) (error, <-chan *Depth, chan<- struct{}) {
 	endpoint := fmt.Sprintf("%s/%s@depth@100ms", this.baseURL, pair)
 	messages := make(chan *Depth)
 	close := make(chan struct{})
@@ -55,7 +56,7 @@ func (this *binanceWs) SubscribeDepth(pair string) (error, chan<- *Depth, <-chan
 	handle := func(msg []byte) error {
 		rawDepth := Depth{}
 		if err := json.Unmarshal(msg, &rawDepth); err != nil {
-			log.Errorf("json unmarshal error: %s", string(msg))
+			log.Printf("json unmarshal error: %s", string(msg))
 			return err
 		}
 
@@ -68,7 +69,7 @@ func (this *binanceWs) SubscribeDepth(pair string) (error, chan<- *Depth, <-chan
 
 	go func() {
 		<- close
-		this.Close()
+		this.conn.Close()
 	}()
 
 	return nil, messages, close

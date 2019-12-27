@@ -1,4 +1,5 @@
 github.com/alexey-ernest/go-binance-websocket v0.0.0-20191216230621-c8cc2acb760d h1:Rq9/4GVvxIqbK3RyAm3zmOcR2lQI3VYpditWcIajedk=
+github.com/alexey-ernest/go-binance-websocket v0.0.0-20191216230621-c8cc2acb760d/go.mod h1:Ip1Y9A/0RFFFvPUJbgXLybmpmpdglKmJinMEwhqfoLM=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
