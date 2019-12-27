@@ -218,6 +218,10 @@ func (ws *WsConn) SendJsonMessage(m interface{}) error {
 	return nil
 }
 
+func (ws *WsConn) ReceiveMessage(msg []byte) {
+	ws.MessageHandleFunc(msg)
+}
+
 func (ws *WsConn) receiveMessage() {
 	ws.c.SetCloseHandler(func(code int, text string) error {
 		log.Printf("[ws][%s] websocket exiting [code=%d , text=%s]", ws.WsUrl, code, text)

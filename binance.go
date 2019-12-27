@@ -13,7 +13,7 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 type binanceWs struct {
 	baseURL string
 	//depthPool *sync.Pool
-	conn *ws.WsConn
+	Conn *ws.WsConn
 }
 
 func NewBinanceWs() *binanceWs {
@@ -45,12 +45,12 @@ func (this *binanceWs) subscribe(endpoint string, handle func(msg []byte) error)
 		WsUrl(endpoint).
 		AutoReconnect().
 		MessageHandleFunc(handle)
-	this.conn = wsBuilder.Build()
+	this.Conn = wsBuilder.Build()
 }
 
 func (this *binanceWs) SubscribeDepth(pair string) (error, <-chan *Depth, chan<- struct{}) {
 	endpoint := fmt.Sprintf("%s/%s@depth@100ms", this.baseURL, pair)
-	messages := make(chan *Depth)
+	messages := make(chan *Depth, 10)
 	close := make(chan struct{})
 
 	handle := func(msg []byte) error {
@@ -69,7 +69,7 @@ func (this *binanceWs) SubscribeDepth(pair string) (error, <-chan *Depth, chan<-
 
 	go func() {
 		<- close
-		this.conn.Close()
+		this.Conn.Close()
 	}()
 
 	return nil, messages, close
