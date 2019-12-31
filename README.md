@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.com/alexey-ernest/go-binance-websocket.svg?branch=master)](https://travis-ci.com/alexey-ernest/go-binance-websocket)
 
 # go-binance-websocket
-Binance websocket streams API
+Binance websocket client with optimized latency
 
 ## Optimized latency
 Leveraging fast json deserializer and object pool for good base performance around ~1500 ns/op or ~600K op/s
