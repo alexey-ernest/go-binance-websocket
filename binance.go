@@ -5,7 +5,6 @@ import (
 	"github.com/alexey-ernest/go-binance-websocket/m/v2/ws"
 	"log"
 	"fmt"
-	"sync"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -13,17 +12,11 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 type binanceWs struct {
 	baseURL string
 	Conn *ws.WsConn
-	depthpool *sync.Pool
 }
 
 func NewBinanceWs() *binanceWs {
 	bnWs := &binanceWs{}
 	bnWs.baseURL = "wss://stream.binance.com:9443/ws"
-	bnWs.depthpool = &sync.Pool {
-		New: func() interface{} {
-			return new(RawDepth)
-		},
-	}
 	return bnWs
 }
 
@@ -47,7 +40,6 @@ func (this *binanceWs) SubscribeDepth(pair string, callback func (*Depth)) (erro
 		}
 
 		callback(rawDepth)
-		//this.depthpool.Put(rawDepth)
 		return nil
 	}
 	this.subscribe(endpoint, handle)
