@@ -5,6 +5,7 @@ import (
 	"github.com/alexey-ernest/go-binance-websocket/m/v2/ws"
 	"log"
 	"fmt"
+	"sync"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -12,11 +13,17 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 type binanceWs struct {
 	baseURL string
 	Conn *ws.WsConn
+	depthpool *sync.Pool
 }
 
 func NewBinanceWs() *binanceWs {
 	bnWs := &binanceWs{}
 	bnWs.baseURL = "wss://stream.binance.com:9443/ws"
+	bnWs.depthpool = &sync.Pool {
+		New: func() interface{} {
+			return new(RawDepth)
+		},
+	}
 	return bnWs
 }
 
@@ -28,9 +35,8 @@ func (this *binanceWs) subscribe(endpoint string, handle func(msg []byte) error)
 	this.Conn = wsBuilder.Build()
 }
 
-func (this *binanceWs) SubscribeDepth(pair string) (error, <-chan *Depth, chan<- struct{}) {
+func (this *binanceWs) SubscribeDepth(pair string, callback func (*Depth)) (error, chan<- struct{}) {
 	endpoint := fmt.Sprintf("%s/%s@depth@100ms", this.baseURL, pair)
-	messages := make(chan *Depth, 10)
 	close := make(chan struct{})
 
 	handle := func(msg []byte) error {
@@ -40,9 +46,8 @@ func (this *binanceWs) SubscribeDepth(pair string) (error, <-chan *Depth, chan<-
 			return err
 		}
 
-		// send message down to the channel
-		messages <- rawDepth
-
+		callback(rawDepth)
+		//this.depthpool.Put(rawDepth)
 		return nil
 	}
 	this.subscribe(endpoint, handle)
@@ -52,5 +57,5 @@ func (this *binanceWs) SubscribeDepth(pair string) (error, <-chan *Depth, chan<-
 		this.Conn.Close()
 	}()
 
-	return nil, messages, close
+	return nil, close
 }

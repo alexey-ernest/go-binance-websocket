@@ -2,31 +2,35 @@ package binancewebsocket
 
 import (
 	"github.com/alexey-ernest/go-binance-websocket/m/v2/pool"
-	"errors"
+	//"errors"
 )
 
-type Depth struct {
-	pool.ReferenceCounter `json:"-"`
-
+type RawDepth struct {
 	LastUpdateID int64 `json:"u"`
 	Bids [][]interface{} `json:"b"`
 	Asks [][]interface{} `json:"a"`
 }
 
-func (e *Depth) Reset() {
-	e.Bids = nil
-	e.Asks = nil
-	e.LastUpdateID = 0
+type Depth struct {
+	pool.ReferenceCounter `json:"-"`
+	RawDepth
+}
+
+func (d *Depth) Reset() {
+	d.Bids = nil
+	d.Asks = nil
+	d.LastUpdateID = 0
 }
 
 // Used by reference countable pool
 func ResetDepth(i interface{}) error {
-	obj, ok := i.(*Depth)
-	if !ok {
-		return errors.New("illegal object sent to ResetDepth")
-	}
-	obj.Reset()
 	return nil
+	// obj, ok := i.(*Depth)
+	// if !ok {
+	// 	return errors.New("illegal object sent to ResetDepth")
+	// }
+	// obj.Reset()
+	// return nil
 }
 
 // depth pool
