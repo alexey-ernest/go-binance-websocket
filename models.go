@@ -7,8 +7,8 @@ import (
 
 type RawDepth struct {
 	LastUpdateID int64 `json:"u"`
-	Bids [][]interface{} `json:"b"`
-	Asks [][]interface{} `json:"a"`
+	Bids [][2]string `json:"b"`
+	Asks [][2]string `json:"a"`
 }
 
 type Depth struct {
