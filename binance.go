@@ -2,7 +2,7 @@ package binancewebsocket
 
 import (
 	"github.com/json-iterator/go"
-	"github.com/alexey-ernest/go-binance-websocket/m/v2/ws"
+	"github.com/alexey-ernest/go-binance-websocket/ws"
 	"log"
 	"fmt"
 )

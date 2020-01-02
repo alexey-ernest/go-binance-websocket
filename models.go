@@ -1,7 +1,7 @@
 package binancewebsocket
 
 import (
-	"github.com/alexey-ernest/go-binance-websocket/m/v2/pool"
+	"github.com/alexey-ernest/go-binance-websocket/pool"
 	//"errors"
 )
 
