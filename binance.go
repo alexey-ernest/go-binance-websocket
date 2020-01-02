@@ -5,6 +5,7 @@ import (
 	"github.com/alexey-ernest/go-binance-websocket/ws"
 	"log"
 	"fmt"
+	"time"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -45,8 +46,18 @@ func (this *binanceWs) SubscribeDepth(pair string, callback func (*Depth)) (erro
 	this.subscribe(endpoint, handle)
 
 	go func() {
-		<- close
-		this.Conn.Close()
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <- close:
+				this.Conn.Close()
+				return
+			case t := <-ticker.C:
+				this.Conn.SendPingMessage([]byte(t.String()))
+			}
+		}
 	}()
 
 	return nil, close

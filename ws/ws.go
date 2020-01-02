@@ -288,4 +288,8 @@ func (ws *WsConn) Close() {
 	if err != nil {
 		log.Println("[ws]", ws.WsUrl, "close websocket error ,", err)
 	}
+
+	if ws.IsDump {
+		log.Println("[ws]", ws.WsUrl, "connection closed")	
+	}
 }

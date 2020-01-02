@@ -2,6 +2,7 @@ package binancewebsocket
 
 import (
 	"testing"
+	"time"
 )
 
 func TestBinanceDepthConnection(t *testing.T) {
@@ -11,6 +12,17 @@ func TestBinanceDepthConnection(t *testing.T) {
 		t.Fatalf("failed to connect to binance @depth websocket")
 	}
 	close <- struct{}{}
+}
+
+func TestBinanceDepthCloseConnectionDirectly(t *testing.T) {
+	ws := NewBinanceWs()
+	err, _ := ws.SubscribeDepth("btcusdt", func (d *Depth) {})
+	if err != nil {
+		t.Fatalf("failed to connect to binance @depth websocket")
+	}
+	
+	ws.Conn.Close()
+	time.Sleep(time.Duration(1) * time.Second)
 }
 
 func TestBinanceDepthMessage(t *testing.T) {
