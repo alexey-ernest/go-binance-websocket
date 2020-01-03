@@ -211,7 +211,7 @@ func (ws *WsConn) SendCloseMessage(msg []byte) {
 func (ws *WsConn) SendJsonMessage(m interface{}) error {
 	data, err := json.Marshal(m)
 	if err != nil {
-		log.Printf("[ws][%s] json encode error , %s", ws.WsUrl, err)
+		log.Printf("[ws][%s] json encode error, %s", ws.WsUrl, err)
 		return err
 	}
 	ws.writeBufferChan <- data
@@ -224,7 +224,7 @@ func (ws *WsConn) ReceiveMessage(msg []byte) {
 
 func (ws *WsConn) receiveMessage() {
 	ws.c.SetCloseHandler(func(code int, text string) error {
-		log.Printf("[ws][%s] websocket exiting [code=%d , text=%s]", ws.WsUrl, code, text)
+		log.Printf("[ws][%s] websocket exiting [code=%d, text=%s]", ws.WsUrl, code, text)
 		ws.Close()
 		return nil
 	})
@@ -236,7 +236,8 @@ func (ws *WsConn) receiveMessage() {
 
 	ws.c.SetPingHandler(func(ping string) error {
 		ws.c.SetReadDeadline(time.Now().Add(ws.readDeadLineTime))
-		return nil
+		err := ws.c.WriteMessage(websocket.PongMessage, nil)
+		return err
 	})
 
 	for {
