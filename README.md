@@ -4,7 +4,7 @@
 Binance websocket client with optimized latency
 
 ## Optimized latency
-Leveraging fast json deserializer and object pool for good base performance (i5 6-core): ~1500 ns/op or ~600K op/s
+Leveraging fast json deserializer and object pool for good base performance (i5 6-core): ~1000 ns/op or ~1M op/s
 ```
 $ go test --bench=. --benchtime 30s --benchmem
 
