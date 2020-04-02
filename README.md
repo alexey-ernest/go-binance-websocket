@@ -10,3 +10,29 @@ $ go test --bench=. --benchtime 30s --benchmem
 
 BenchmarkBinanceMessageHandling-4 21613016  1575 ns/op  128 B/op  8 allocs/op
 ```
+
+## Example
+
+```
+import (
+	. "github.com/alexey-ernest/go-binance-websocket"
+	"log"
+)
+
+func main() {
+	ws := NewBinanceWs()
+	messages := make(chan *Depth, 10)
+	err, _ := ws.SubscribeDepth("btcusdt", func (d *Depth) {
+		messages <- d
+	})
+
+	if err != nil {
+		log.Fatalf("failed to connect to binance @depth websocket")
+	}
+
+	for m := range messages {
+		log.Printf("%+v\n", m.RawDepth)
+		m.DecrementReferenceCount()
+	}
+}
+```

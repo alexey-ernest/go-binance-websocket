@@ -57,13 +57,6 @@ func BenchmarkBinanceMessageHandling(b *testing.B) {
 		b.Fatalf("failed to connect to binance @depth websocket")
 	}
 
-	// go func() {
-	// 	for {
-	// 		d := <- messages
-	// 		d.DecrementReferenceCount()
-	// 	}
-	// }()
-
 	b.ResetTimer()
 	msg := []byte("{\"e\":\"depthUpdate\",\"E\":1577485630559,\"s\":\"BTCUSDT\",\"U\":1627259958,\"u\":1627259960,\"b\":[[\"7246.02000000\",\"0.00000000\"],[\"7246.00000000\",\"0.02930400\"],[\"7245.75000000\",\"0.00000000\"],[\"7239.18000000\",\"0.00000000\"]],\"a\":[]}")
 	for i := 0; i < b.N; i += 1 {
