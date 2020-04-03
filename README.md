@@ -32,7 +32,7 @@ func main() {
 
 	for m := range messages {
 		log.Printf("%+v\n", m.RawDepth)
-		m.DecrementReferenceCount()
+		m.DecrementReferenceCount() // return object back to the object pool
 	}
 }
 ```
