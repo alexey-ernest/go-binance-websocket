@@ -230,17 +230,17 @@ func (ws *WsConn) receiveMessage() {
 	})
 
 	ws.c.SetPongHandler(func(pong string) error {
-		log.Printf("[ws][%s] pong received", ws.WsUrl)
+		// log.Printf("[ws][%s] pong received", ws.WsUrl)
 		ws.c.SetReadDeadline(time.Now().Add(ws.readDeadLineTime))
 		return nil
 	})
 
 	ws.c.SetPingHandler(func(ping string) error {
-		log.Printf("[ws][%s] ping received", ws.WsUrl)
+		//log.Printf("[ws][%s] ping received", ws.WsUrl)
 		ws.c.SetReadDeadline(time.Now().Add(ws.readDeadLineTime))
 		err := ws.c.WriteMessage(websocket.PongMessage, nil)
 		if err == nil {
-			log.Printf("[ws][%s] pong sent", ws.WsUrl)
+			//log.Printf("[ws][%s] pong sent", ws.WsUrl)
 		}
 		return err
 	})
