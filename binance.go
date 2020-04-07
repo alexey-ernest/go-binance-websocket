@@ -46,7 +46,7 @@ func (this *binanceWs) SubscribeDepth(pair string, callback func (*Depth)) (erro
 	this.subscribe(endpoint, handle)
 
 	go func() {
-		ticker := time.NewTicker(time.Second)
+		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
 
 		for {

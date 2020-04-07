@@ -32,7 +32,6 @@ type WsConn struct {
 	closeMessageBufferChan chan []byte
 	subs                   []interface{}
 	close                  chan struct{}
-	isClosed               bool
 }
 
 type WsBuilder struct {
@@ -92,7 +91,7 @@ func (ws *WsConn) NewWs() *WsConn {
 		log.Panic(err)
 	}
 
-	ws.close = make(chan struct{}, 1)
+	ws.close = make(chan struct{}, 2)
 	ws.pingMessageBufferChan = make(chan []byte, 10)
 	ws.closeMessageBufferChan = make(chan []byte, 1)
 	ws.writeBufferChan = make(chan []byte, 10)
@@ -168,6 +167,7 @@ func (ws *WsConn) writeRequest() {
 	for {
 		select {
 		case <-ws.close:
+			// stop the goroutine if the ws is closed
 			//log.Printf("[ws][%s] close websocket, exiting write message goroutine.", ws.WsUrl)
 			return
 		case d := <-ws.writeBufferChan:
@@ -249,7 +249,8 @@ func (ws *WsConn) receiveMessage() {
 
 		t, msg, err := ws.c.ReadMessage()
 		
-		if len(ws.close) > 0 || ws.isClosed {
+		if len(ws.close) > 0 {
+			// stop goroutine if the ws is closed
 			//log.Printf("[ws][%s] close websocket, exiting receive message goroutine.", ws.WsUrl)
 			return
 		}
@@ -286,16 +287,15 @@ func (ws *WsConn) receiveMessage() {
 }
 
 func (ws *WsConn) Close() {
-	ws.isClosed = true
-	ws.close <- struct{}{}
-	close(ws.close)
+	ws.close <- struct{}{} // one for the write goroutine
+	ws.close <- struct{}{} // another for the read goroutine
 
 	err := ws.c.Close()
 	if err != nil {
-		log.Println("[ws]", ws.WsUrl, "close websocket error ,", err)
+		log.Printf("[ws][%s] close websocket error: %s", ws.WsUrl, err)
 	}
 
 	if ws.IsDump {
-		log.Println("[ws]", ws.WsUrl, "connection closed")	
+		log.Printf("[ws][%s] connection closed", ws.WsUrl)
 	}
 }
